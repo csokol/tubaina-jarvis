@@ -1,0 +1,118 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+require "rubygems"
+require "thor"
+
+class Jarvis < Thor
+  include Thor::Actions
+  source_root Dir.pwd
+
+  desc "draft NAME", "generates a new draft"
+  def draft(name)
+    create_file "drafts/#{name}.css"
+    copy_file "template/index.html", "drafts/#{name}.html"
+
+    stylesheet_tag = %Q{<link rel="stylesheet" href="#{name}.css">\n    }
+    insert_into_file "drafts/#{name}.html", stylesheet_tag, :before => '<script src="prefixfree.min.js"></script>'
+  end
+
+  desc "lint", "Checks for possible errors on the build."
+  def lint
+    check_file_clashing
+    check_code_length
+    check_encoding
+  end
+
+  desc "indices", "Counts the existing indices."
+  def indices
+    each_chapter do |chapter, path|
+      contents = File.read(path)
+      say_status chapter.rjust(20), contents.scan(/^\[index/).size
+    end
+  end
+
+  desc "todo", "Prints the current TODOs on the code."
+  def todo
+    each_chapter do |chapter, path|
+      file = File.new(path)
+      file.each do |line|
+        if line =~ /\[todo(.*)/i
+          say_status "#{chapter} -> #{file.lineno}", $1.strip.chop
+        end
+      end
+    end
+  end
+
+  desc "rename [CHAPTER]", "Rename exported images by photoshop on the given chapter."
+  def rename(chapter)
+    folder = File.expand_path("resources/#{chapter}")
+    files  = Dir["#{folder}/**/*.jpg"].select { |file| File.basename(file) =~ /\A_\d{4}_/ }
+
+    files.each do |file|
+      sanitized = file.gsub(/_\d{4}_/, '')
+      say_status "moving", "#{File.basename(file)}"
+      FileUtils.mv(file, sanitized)
+    end
+  end
+
+  protected
+  def each_chapter
+    return to_enum :each_chapter unless block_given?
+    Dir["book/**/*.afc"].each do |path|
+      chapter = File.basename(path).gsub(/\d{2}-|\.afc/, "")
+      yield chapter, path
+    end
+  end
+
+  def check_code_length(limit = 75)
+    say "Checking code lines bigger than #{limit}..."
+    each_chapter do |chapter, path|
+      lines = File.read(path).scan(/\[code html\][\S\s]*?\[\/code\]/m).map do |block|
+        block.gsub(/\[code html\]|\[\/code\]/, '').split("\n")
+      end.flatten
+
+      lines = lines.select { |l| l.length > limit }.sort_by(&:length)
+      next if lines.empty?
+
+      say_status chapter, nil, :red
+      with_padding do
+        lines.each { |l| say_status(l.length, l) }
+      end
+    end
+  end
+
+  def check_file_clashing
+    say "Checking resource names errors..."
+    everything = Dir["resources/**/**.jpg"]
+    groups     = everything.group_by { |f| File.basename(f) }
+    matches    = groups.select { |key, files| files.length > 1 }
+    matches.each do |name, files|
+      say_status name, files.join(', '), :red
+    end
+  end
+  
+  def check_encoding
+    say "Checking encoding errors..."
+    each_chapter do |chapter, path|
+      open(path,"r:UTF-8").readlines().each do |line|
+        unless valid_encoding line
+          say "\nWrong encoding (#{line.encoding.name}) at chapter #{chapter}, at line: "
+          say line
+        end
+      end
+    end
+  end
+  
+  def valid_encoding(line)
+    begin
+      converter = Encoding::Converter.new("UTF-8", "ISO-8859-1")
+      converter.convert line
+    rescue
+      return false
+    end
+    line.encoding.name == 'UTF-8' and line.valid_encoding?
+  end
+  
+end
+
+Jarvis.start
