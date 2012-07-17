@@ -6,9 +6,17 @@ require "thor"
 class Jarvis < Thor
   include Thor::Actions
   source_root Dir.pwd
+  
+  def self.with_afc_path_option
+    method_options :afc_path => :string
+  end
+  
+  @afc_path = "book/"
 
   desc "draft NAME", "generates a new draft"
+  with_afc_path_option
   def draft(name)
+    get_path options
     create_file "drafts/#{name}.css"
     copy_file "template/index.html", "drafts/#{name}.html"
 
@@ -17,14 +25,18 @@ class Jarvis < Thor
   end
 
   desc "lint", "Checks for possible errors on the build."
+  with_afc_path_option
   def lint
+    get_path options
     check_file_clashing
     check_code_length
     check_encoding
   end
 
   desc "indices", "Counts the existing indices."
+  with_afc_path_option
   def indices
+    get_path options
     each_chapter do |chapter, path|
       contents = File.read(path)
       say_status chapter.rjust(20), contents.scan(/^\[index/).size
@@ -32,7 +44,9 @@ class Jarvis < Thor
   end
 
   desc "todo", "Prints the current TODOs on the code."
+  with_afc_path_option
   def todo
+    get_path options
     each_chapter do |chapter, path|
       file = File.new(path)
       file.each do |line|
@@ -44,7 +58,9 @@ class Jarvis < Thor
   end
 
   desc "rename [CHAPTER]", "Rename exported images by photoshop on the given chapter."
+  with_afc_path_option
   def rename(chapter)
+    get_path options
     folder = File.expand_path("resources/#{chapter}")
     files  = Dir["#{folder}/**/*.jpg"].select { |file| File.basename(file) =~ /\A_\d{4}_/ }
 
@@ -58,7 +74,7 @@ class Jarvis < Thor
   protected
   def each_chapter
     return to_enum :each_chapter unless block_given?
-    Dir["book/**/*.afc"].each do |path|
+    Dir.glob("#{@afc_path}/**/*.afc").each do |path|
       chapter = File.basename(path).gsub(/\d{2}-|\.afc/, "")
       yield chapter, path
     end
@@ -111,6 +127,10 @@ class Jarvis < Thor
       return false
     end
     line.encoding.name == 'UTF-8' and line.valid_encoding?
+  end
+  
+  def get_path options
+    @afc_path = options[:afc_path] ? options[:afc_path] : "book/"
   end
   
 end
