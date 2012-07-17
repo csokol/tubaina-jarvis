@@ -2,6 +2,7 @@
 # encoding: UTF-8
 require "rubygems"
 require "thor"
+require "set"
 
 class Jarvis < Thor
   include Thor::Actions
@@ -31,6 +32,7 @@ class Jarvis < Thor
     check_file_clashing
     check_code_length
     check_encoding
+    check_references
   end
 
   desc "indices", "Counts the existing indices."
@@ -108,14 +110,60 @@ class Jarvis < Thor
   end
   
   def check_encoding
-    say "Checking encoding errors..."
+    say "\nChecking encoding errors..."
     each_chapter do |chapter, path|
       open(path,"r:UTF-8").readlines().each do |line|
         unless valid_encoding line
-          say "\nWrong encoding (#{line.encoding.name}) at chapter #{chapter}, at line: "
+          say "\nInvalid char at chapter #{chapter}, at line: \n"
           say line
         end
       end
+    end
+  end
+  
+  def check_references
+    say "\nChecking labels and references..."
+    labels = find_labels
+    find_invalid_references labels
+  end
+  
+  def find_labels
+    labels = []
+    each_chapter do |chapter, path|
+      lines = File.readlines(path)
+      lines.each do |line|
+        line.scan(/\[label\s+(\S*)\s*\]/) do |label| 
+          labels << label
+        end
+        line.scan(/\[img.*label=(\S*).*\]/) do |label| 
+          labels << label
+        end
+        line.scan(/\[code.*label=(\S*).*\]/) do |label| 
+          labels << label
+        end
+      end
+    end
+    labels.to_set
+  end
+  
+  def find_invalid_references(labels)
+    each_chapter do |chapter, path|
+      lines = File.readlines(path)
+      lines.each do |line|
+        line.scan(/\[ref-label\s+(\S*)\s*\]/) do |ref| 
+          check_ref(labels, ref, chapter, line)
+        end
+        line.scan(/\[ref-code\s+(\S*)\s*\]/) do |ref| 
+          check_ref(labels, ref, chapter, line)
+        end
+      end
+    end
+  end
+  
+  def check_ref(labels, ref, chapter , line)
+    unless labels.include? ref
+      say "\nInvalid reference at chapter '#{chapter}', at line:"
+      say line
     end
   end
   
