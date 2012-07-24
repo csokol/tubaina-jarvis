@@ -29,10 +29,12 @@ class Jarvis < Thor
   with_afc_path_option
   def lint
     get_path options
+    ok = true
+    check_references
     check_file_clashing
     check_code_length
-    check_encoding
-    check_references
+    ok = ok && check_encoding
+    raise "afc syntax errors (see above)" if not ok
   end
 
   desc "indices", "Counts the existing indices."
@@ -84,19 +86,24 @@ class Jarvis < Thor
 
   def check_code_length(limit = 75)
     say "Checking code lines bigger than #{limit}..."
+    ok = true
     each_chapter do |chapter, path|
       lines = File.read(path).scan(/\[code html\][\S\s]*?\[\/code\]/m).map do |block|
         block.gsub(/\[code html\]|\[\/code\]/, '').split("\n")
       end.flatten
 
+
       lines = lines.select { |l| l.length > limit }.sort_by(&:length)
       next if lines.empty?
 
+      ok = false
+      
       say_status chapter, nil, :red
       with_padding do
         lines.each { |l| say_status(l.length, l) }
       end
     end
+    ok
   end
 
   def check_file_clashing
@@ -107,22 +114,27 @@ class Jarvis < Thor
     matches.each do |name, files|
       say_status name, files.join(', '), :red
     end
+    true
   end
   
   def check_encoding
-    say "\nChecking encoding errors..."
+    ok = true
+    say "Checking encoding errors..."
     each_chapter do |chapter, path|
       open(path,"r:UTF-8").readlines().each do |line|
+        next if line.include? "[TODO"
         unless valid_encoding line
           say "\nInvalid char at chapter #{chapter}, at line: \n"
           say line
+          ok = false
         end
       end
     end
+    ok
   end
   
   def check_references
-    say "\nChecking labels and references..."
+    say "Checking labels and references..."
     labels = find_labels
     find_invalid_references labels
   end
