@@ -13,7 +13,6 @@ class Jarvis < Thor
   end
   
   @afc_path = "book/"
-  @ok = true
 
   desc "draft NAME", "generates a new draft"
   with_afc_path_option
@@ -29,6 +28,7 @@ class Jarvis < Thor
   desc "lint", "Checks for possible errors on the build."
   with_afc_path_option
   def lint
+    @ok = true
     get_path options
     check_references
     check_file_clashing
@@ -86,24 +86,19 @@ class Jarvis < Thor
 
   def check_code_length(limit = 75)
     say "Checking code lines bigger than #{limit}..."
-    ok = true
     each_chapter do |chapter, path|
       lines = File.read(path).scan(/\[code html\][\S\s]*?\[\/code\]/m).map do |block|
         block.gsub(/\[code html\]|\[\/code\]/, '').split("\n")
       end.flatten
 
-
       lines = lines.select { |l| l.length > limit }.sort_by(&:length)
       next if lines.empty?
 
-      ok = false
-      
       say_status chapter, nil, :red
       with_padding do
         lines.each { |l| say_status(l.length, l) }
       end
     end
-    ok
   end
 
   def check_file_clashing
@@ -114,7 +109,6 @@ class Jarvis < Thor
     matches.each do |name, files|
       say_status name, files.join(', '), :red
     end
-    true
   end
   
   def check_encoding
