@@ -115,7 +115,7 @@ class Jarvis < Thor
     say "Checking encoding errors..."
     each_chapter do |chapter, path|
       open(path,"r:UTF-8").readlines().each do |line|
-        next if line.include? "[TODO"
+        next if is_todo? line
         unless valid_encoding line
           say "\nInvalid char at chapter #{chapter}, at line: \n"
           say line
@@ -154,6 +154,7 @@ class Jarvis < Thor
     each_chapter do |chapter, path|
       lines = File.readlines(path)
       lines.each do |line|
+        next if is_todo? line
         line.scan(/\[ref-label\s+(\S*)\s*\]/) do |ref| 
           check_ref(labels, ref, chapter, line)
         end
@@ -162,6 +163,10 @@ class Jarvis < Thor
         end
       end
     end
+  end
+  
+  def is_todo?(line)
+    line.start_with? "[TODO"
   end
   
   def check_ref(labels, ref, chapter , line)
