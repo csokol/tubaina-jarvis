@@ -13,6 +13,7 @@ class Jarvis < Thor
   end
   
   @afc_path = "book/"
+  @ok = true
 
   desc "draft NAME", "generates a new draft"
   with_afc_path_option
@@ -29,12 +30,11 @@ class Jarvis < Thor
   with_afc_path_option
   def lint
     get_path options
-    ok = true
     check_references
     check_file_clashing
     check_code_length
-    ok = ok && check_encoding
-    raise "afc syntax errors (see above)" if not ok
+    check_encoding
+    raise "afc syntax errors (see above)" if not @ok
   end
 
   desc "indices", "Counts the existing indices."
@@ -118,7 +118,6 @@ class Jarvis < Thor
   end
   
   def check_encoding
-    ok = true
     say "Checking encoding errors..."
     each_chapter do |chapter, path|
       open(path,"r:UTF-8").readlines().each do |line|
@@ -126,11 +125,10 @@ class Jarvis < Thor
         unless valid_encoding line
           say "\nInvalid char at chapter #{chapter}, at line: \n"
           say line
-          ok = false
+          @ok = false
         end
       end
     end
-    ok
   end
   
   def check_references
