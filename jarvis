@@ -134,17 +134,15 @@ class Jarvis < Thor
   def find_labels
     labels = []
     each_chapter do |chapter, path|
-      lines = File.readlines(path)
-      lines.each do |line|
-        line.scan(/\[label\s+(\S*)\s*\]/) do |label| 
-          labels << label
-        end
-        line.scan(/\[img.*label=(\S*).*\]/) do |label| 
-          labels << label
-        end
-        line.scan(/\[code.*label=(\S*).*\]/) do |label| 
-          labels << label
-        end
+      chapter_text = File.read(path)
+      chapter_text.scan(/\[img[^\]]*label=(\S*)\]/m) do |label|
+        labels << label
+      end
+      chapter_text.scan(/\[code[^\]]*label=(\S*)\]/m) do |label|
+        labels << label
+      end
+      chapter_text.scan(/\[label\s+(\S*)\s*\]/) do |label|
+        labels << label
       end
     end
     labels.to_set

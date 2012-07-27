@@ -1,0 +1,31 @@
+
+Observe a figura [ref-label wrong-img-ref]. Nela é possível ver como o Rails
+compõe uma página final, baseando-se em um layout e um template de uma ação.
+
+[ref-label layoutComposition1]
+
+[ref-label layoutComposition2]
+
+[ref-code label-code]
+
+[ref-code wrong-code-ref]
+
+[code label=label-code]
+lalala
+[/code]
+
+[img images/layout-composition.png "Composição de página usando layouts" 
+label=layoutComposition1]
+
+
+[img images/layout-composition.png "Composição de página usando layouts" 
+label=layoutComposition2]
+
+O uso de layouts dessa forma é bastante prático. Não há a necessidade de
+repetir diversos comandos e tags (evitando também um tedioso trabalho de
+busca/substituição quando você faz alguma alteração), basta escrever o HTML
+específico da sua página.
+
+
+[img images/layout-composition.png "Composição de página usando layouts" 
+label=layoutComposition3]
