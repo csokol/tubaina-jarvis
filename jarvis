@@ -113,25 +113,18 @@ class Jarvis < Thor
 
   def check_references
     say "Checking labels and references..."
-    labels = find_labels
-    find_invalid_references labels
+    find_invalid_references(find_labels)
   end
 
   def find_labels
     labels = []
     each_chapter do |chapter, path|
-      chapter_text = File.read(path)
-      chapter_text.scan(/\[img[^\]]*label=(\S*)\]/m) do |label|
-        labels << label
-      end
-      chapter_text.scan(/\[code[^\]]*label=(\S*)\]/m) do |label|
-        labels << label
-      end
-      chapter_text.scan(/\[label\s+(\S*)\s*\]/) do |label|
-        labels << label
-      end
+      contents = File.read(path)
+      labels.concat(contents.scan(/\[img[^\]]*label=(\S*)\]/m))
+      labels.concat(contents.scan(/\[code[^\]]*label=(\S*)\]/m))
+      labels.concat(contents.scan(/\[label\s+(\S*)\s*\]/))
     end
-    labels.to_set
+    labels.flatten.to_set
   end
 
   def find_invalid_references(labels)
@@ -139,11 +132,8 @@ class Jarvis < Thor
       lines = File.readlines(path)
       lines.each do |line|
         next if todo? line
-        line.scan(/\[ref-label\s+(\S*)\s*\]/) do |ref|
-          check_ref(labels, ref, chapter, line)
-        end
-        line.scan(/\[ref-code\s+(\S*)\s*\]/) do |ref|
-          check_ref(labels, ref, chapter, line)
+        line.scan(/\[ref-label\s+(\S*)\s*\]|\[ref-code\s+(\S*)\s*\]/) do |ref|
+          check_ref(labels, ref.compact.first, chapter, line)
         end
       end
     end
@@ -153,7 +143,7 @@ class Jarvis < Thor
     line =~ TODO_MATCHER
   end
 
-  def check_ref(labels, ref, chapter , line)
+  def check_ref(labels, ref, chapter, line)
     unless labels.include? ref
       say "\nInvalid reference at chapter '#{chapter}', at line:"
       say line
