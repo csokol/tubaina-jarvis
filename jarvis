@@ -7,17 +7,11 @@ require "set"
 class Jarvis < Thor
   include Thor::Actions
   source_root Dir.pwd
-  
-  def self.with_afc_path_option
-    method_options :afc_path => :string
-  end
-  
-  @afc_path = "book/"
+
+  class_option :afc_path, :type => :string, :default => File.expand_path('book')
 
   desc "draft NAME", "generates a new draft"
-  with_afc_path_option
   def draft(name)
-    get_path options
     create_file "drafts/#{name}.css"
     copy_file "template/index.html", "drafts/#{name}.html"
 
@@ -26,10 +20,8 @@ class Jarvis < Thor
   end
 
   desc "lint", "Checks for possible errors on the build."
-  with_afc_path_option
   def lint
     @ok = true
-    get_path options
     check_references
     check_file_clashing
     check_code_length
@@ -38,9 +30,7 @@ class Jarvis < Thor
   end
 
   desc "indices", "Counts the existing indices."
-  with_afc_path_option
   def indices
-    get_path options
     each_chapter do |chapter, path|
       contents = File.read(path)
       say_status chapter.rjust(20), contents.scan(/^\[index/).size
@@ -48,9 +38,7 @@ class Jarvis < Thor
   end
 
   desc "todo", "Prints the current TODOs on the code."
-  with_afc_path_option
   def todo
-    get_path options
     each_chapter do |chapter, path|
       file = File.new(path)
       file.each do |line|
@@ -62,9 +50,7 @@ class Jarvis < Thor
   end
 
   desc "rename [CHAPTER]", "Rename exported images by photoshop on the given chapter."
-  with_afc_path_option
   def rename(chapter)
-    get_path options
     folder = File.expand_path("resources/#{chapter}")
     files  = Dir["#{folder}/**/*.jpg"].select { |file| File.basename(file) =~ /\A_\d{4}_/ }
 
@@ -78,7 +64,7 @@ class Jarvis < Thor
   protected
   def each_chapter
     return to_enum :each_chapter unless block_given?
-    Dir.glob("#{@afc_path}/**/*.afc").each do |path|
+    Dir.glob("#{afc_path}/**/*.afc").each do |path|
       chapter = File.basename(path).gsub(/\d{2}-|\.afc/, "")
       yield chapter, path
     end
@@ -103,14 +89,14 @@ class Jarvis < Thor
 
   def check_file_clashing
     say "Checking resource names errors..."
-    everything = Dir["resources/**/**.jpg"]
+    everything = Dir["#{afc_path}/resources/**/**.jpg"]
     groups     = everything.group_by { |f| File.basename(f) }
     matches    = groups.select { |key, files| files.length > 1 }
     matches.each do |name, files|
       say_status name, files.join(', '), :red
     end
   end
-  
+
   def check_encoding
     say "Checking encoding errors..."
     each_chapter do |chapter, path|
@@ -124,13 +110,13 @@ class Jarvis < Thor
       end
     end
   end
-  
+
   def check_references
     say "Checking labels and references..."
     labels = find_labels
     find_invalid_references labels
   end
-  
+
   def find_labels
     labels = []
     each_chapter do |chapter, path|
@@ -147,33 +133,33 @@ class Jarvis < Thor
     end
     labels.to_set
   end
-  
+
   def find_invalid_references(labels)
     each_chapter do |chapter, path|
       lines = File.readlines(path)
       lines.each do |line|
         next if is_todo? line
-        line.scan(/\[ref-label\s+(\S*)\s*\]/) do |ref| 
+        line.scan(/\[ref-label\s+(\S*)\s*\]/) do |ref|
           check_ref(labels, ref, chapter, line)
         end
-        line.scan(/\[ref-code\s+(\S*)\s*\]/) do |ref| 
+        line.scan(/\[ref-code\s+(\S*)\s*\]/) do |ref|
           check_ref(labels, ref, chapter, line)
         end
       end
     end
   end
-  
+
   def is_todo?(line)
     line.start_with? "[TODO"
   end
-  
+
   def check_ref(labels, ref, chapter , line)
     unless labels.include? ref
       say "\nInvalid reference at chapter '#{chapter}', at line:"
       say line
     end
   end
-  
+
   def valid_encoding(line)
     begin
       converter = Encoding::Converter.new("UTF-8", "ISO-8859-1")
@@ -183,11 +169,10 @@ class Jarvis < Thor
     end
     line.encoding.name == 'UTF-8' and line.valid_encoding?
   end
-  
-  def get_path options
-    @afc_path = options[:afc_path] ? options[:afc_path] : "book/"
+
+  def afc_path
+    options.afc_path
   end
-  
 end
 
 Jarvis.start
