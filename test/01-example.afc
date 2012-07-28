@@ -14,11 +14,11 @@ compõe uma página final, baseando-se em um layout e um template de uma ação.
 lalala
 [/code]
 
-[img images/layout-composition.png "Composição de página usando layouts" 
+[img images/layout-composition.png "Composição de página usando layouts"
 label=layoutComposition1]
 
 
-[img images/layout-composition.png "Composição de página usando layouts" 
+[img images/layout-composition.png "Composição de página usando layouts"
 label=layoutComposition2]
 
 O uso de layouts dessa forma é bastante prático. Não há a necessidade de
@@ -27,5 +27,8 @@ busca/substituição quando você faz alguma alteração), basta escrever o HTML
 específico da sua página.
 
 
-[img images/layout-composition.png "Composição de página usando layouts" 
+[img images/layout-composition.png "Composição de página usando layouts"
 label=layoutComposition3]
+
+[TODO Um todo em caixa alta]
+[todo Um todo em caixa baixa]

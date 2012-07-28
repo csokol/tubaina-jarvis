@@ -7,7 +7,7 @@ require "set"
 class Jarvis < Thor
   include Thor::Actions
   source_root Dir.pwd
-
+  TODO_MATCHER = /\[todo(.*)/i
   class_option :afc_path, :type => :string, :default => File.expand_path('book')
 
   desc "draft NAME", "generates a new draft"
@@ -42,7 +42,7 @@ class Jarvis < Thor
     each_chapter do |chapter, path|
       file = File.new(path)
       file.each do |line|
-        if line =~ /\[todo(.*)/i
+        if line =~ TODO_MATCHER
           say_status "#{chapter} -> #{file.lineno}", $1.strip.chop
         end
       end
@@ -101,7 +101,7 @@ class Jarvis < Thor
     say "Checking encoding errors..."
     each_chapter do |chapter, path|
       open(path,"r:UTF-8").readlines().each do |line|
-        next if is_todo? line
+        next if todo? line
         unless valid_encoding line
           say "\nInvalid char at chapter #{chapter}, at line: \n"
           say line
@@ -138,7 +138,7 @@ class Jarvis < Thor
     each_chapter do |chapter, path|
       lines = File.readlines(path)
       lines.each do |line|
-        next if is_todo? line
+        next if todo? line
         line.scan(/\[ref-label\s+(\S*)\s*\]/) do |ref|
           check_ref(labels, ref, chapter, line)
         end
@@ -149,8 +149,8 @@ class Jarvis < Thor
     end
   end
 
-  def is_todo?(line)
-    line.start_with? "[TODO"
+  def todo?(line)
+    line =~ TODO_MATCHER
   end
 
   def check_ref(labels, ref, chapter , line)
