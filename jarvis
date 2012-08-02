@@ -131,17 +131,27 @@ class Jarvis < Thor
     find_invalid_references labels
   end
   
+  def verify(label, chapter)
+    label = label.to_s
+    if label.include? "_"
+      say "Invalid label at chapter #{chapter}: #{label}"
+    end
+  end
+  
   def find_labels
     labels = []
     each_chapter do |chapter, path|
       chapter_text = File.read(path)
       chapter_text.scan(/\[img[^\]]*label=(\S*)\]/m) do |label|
+        verify(label[0], chapter)
         labels << label
       end
       chapter_text.scan(/\[code[^\]]*label=(\S*)\]/m) do |label|
+        verify(label[0], chapter)
         labels << label
       end
       chapter_text.scan(/\[label\s+(\S*)\s*\]/) do |label|
+        verify(label[0], chapter)
         labels << label
       end
     end
