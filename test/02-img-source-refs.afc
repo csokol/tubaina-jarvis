@@ -1,0 +1,9 @@
+[chapter lala]
+
+a image with src should work as label [img resources/images/provisioning/c1.png "Primeiro passo para solicitar o certificado digital" label=]
+
+so, this should work [ref-label c1.png]
+
+[img src "Primeiro passo para solicitar o certificado digital" label=normal]
+
+but this should keep working [ref-label normal]

@@ -3,6 +3,7 @@
 require "rubygems"
 require "thor"
 require "set"
+require "pathname"
 
 class Jarvis < Thor
   include Thor::Actions
@@ -137,6 +138,10 @@ class Jarvis < Thor
       end
       chapter_text.scan(/\[label\s+(\S*)\s*\]/) do |label|
         verify(label[0], chapter)
+        labels << label
+      end
+      chapter_text.scan(/\[img\s+(\S+).*label=[\s\]].*/) do |path|
+        label = Pathname.new(path[0]).basename.to_s
         labels << label
       end
     end
