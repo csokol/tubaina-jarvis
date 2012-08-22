@@ -74,8 +74,8 @@ class Jarvis < Thor
   def check_code_length(limit = 75)
     say "Checking code lines bigger than #{limit}..."
     each_chapter do |chapter, path|
-      lines = File.read(path).scan(/\[code html\][\S\s]*?\[\/code\]/m).map do |block|
-        block.gsub(/\[code html\]|\[\/code\]/, '').split("\n")
+      lines = File.read(path).scan(/\[code\S*\s*\S*\][\S\s]*?\[\/code\]/m).map do |block|
+        block.gsub(/\[code\S*\s*\S*\]|\[\/code\]/, '').split("\n")
       end.flatten
 
       lines = lines.select { |l| l.length > limit }.sort_by(&:length)
