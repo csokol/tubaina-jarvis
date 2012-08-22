@@ -71,7 +71,7 @@ class Jarvis < Thor
     end
   end
 
-  def check_code_length(limit = 75)
+  def check_code_length(limit = 73)
     say "Checking code lines bigger than #{limit}..."
     each_chapter do |chapter, path|
       lines = File.read(path).scan(/\[code\S*\s*\S*\][\S\s]*?\[\/code\]/m).map do |block|
