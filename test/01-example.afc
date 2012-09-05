@@ -2,6 +2,8 @@
 Observe a figura [ref-label wrong-img-ref]. Nela é possível ver como o Rails
 compõe uma página final, baseando-se em um layout e um template de uma ação.
 
+[ref-label invalid_reference_with_underline]
+
 [label invalid_label_with_underscore]
 
 [ref-label layoutComposition1]

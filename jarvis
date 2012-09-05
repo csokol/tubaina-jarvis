@@ -120,7 +120,7 @@ class Jarvis < Thor
   def verify(label, chapter)
     label = label.to_s
     if label.include? "_"
-      say "Invalid label at chapter #{chapter}: #{label}"
+      say "Invalid label at chapter #{chapter}, it should not contain '_' char: #{label}"
     end
   end
   
@@ -167,6 +167,10 @@ class Jarvis < Thor
   def check_ref(labels, ref, chapter, line)
     unless labels.include? ref
       say "\nInvalid reference at chapter '#{chapter}', at line:"
+      say line
+    end
+    if ref.include? '_'
+      say "\nInvalid reference at chapter '#{chapter}', references should not contain '_' char, at line:"
       say line
     end
   end
