@@ -1,0 +1,7 @@
+
+this should work
+
+blabl%ab%la  10% blabl%a %%code%% blablabla %%more code%%
+
+while this should not work
+blabl%ab%la  10% blabl%a %%code%% blablabla %more code%%

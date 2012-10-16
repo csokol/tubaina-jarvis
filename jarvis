@@ -27,6 +27,7 @@ class Jarvis < Thor
     check_file_clashing
     check_code_length
     check_encoding
+    check_inline_codes
     raise Thor::Error, "afc syntax errors (see above)" if not @ok
   end
 
@@ -104,8 +105,8 @@ class Jarvis < Thor
       open(path,"r:UTF-8").readlines().each do |line|
         next if todo? line
         unless valid_encoding line
-          say "\nInvalid char at chapter #{chapter}, at line: \n"
-          say line
+          say_error "\nInvalid char at chapter #{chapter}, at line: \n"
+          say_error line
           @ok = false
         end
       end
@@ -115,6 +116,27 @@ class Jarvis < Thor
   def check_references
     say "Checking labels and references..."
     find_invalid_references(find_labels)
+  end
+
+  def check_inline_codes
+    say "Checking inline codes..."
+    valid = true
+    each_chapter do |chapter, path|
+      f = File.new(path)
+      f.lines.each do |line| 
+        valid = false if contains_invalid_inline_code(line, chapter)
+      end
+    end
+  end
+
+  def contains_invalid_inline_code(line, chapter)
+    invalid = (line.scan("%%").length % 2) == 1
+    say_error "Invalid inline code at chapter #{chapter}: #{line}" if invalid
+    invalid
+  end
+
+  def say_error(msg)
+    say_status msg, nil, :red
   end
   
   def verify(label, chapter)
@@ -166,12 +188,12 @@ class Jarvis < Thor
 
   def check_ref(labels, ref, chapter, line)
     unless labels.include? ref
-      say "\nInvalid reference at chapter '#{chapter}', at line:"
-      say line
+      say_error "\nInvalid reference at chapter '#{chapter}', at line:"
+      say_error line
     end
     if ref.include? '_'
-      say "\nInvalid reference at chapter '#{chapter}', references should not contain '_' char, at line:"
-      say line
+      say_error "\nInvalid reference at chapter '#{chapter}', references should not contain '_' char, at line:"
+      say_error line
     end
   end
 
